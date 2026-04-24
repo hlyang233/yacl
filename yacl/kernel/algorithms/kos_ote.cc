@@ -207,6 +207,8 @@ void KosOtExtSend(const std::shared_ptr<link::Context>& ctx,
   auto batch1 = VecXorMonochrome(absl::MakeSpan(q_ext), delta);
 
   if (!cot) {
+  	// 0 is the beginning index of OT message pairs (0,1,2,3,...) 
+  	// For every pair of OT messages m0 and m1, they use the same tweak (index)
     ParaTccrHashInplace_128(absl::MakeSpan(batch0), 0);
     ParaTccrHashInplace_128(absl::MakeSpan(batch1), 0);
   }
