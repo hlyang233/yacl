@@ -111,8 +111,8 @@ TEST(RPTest, ParaCcrHashInplaceWorks) {
 TEST(RPTest, TccrHashWorks) {
   uint128_t x = FastRandU128();
   uint128_t y = FastRandU128();
-  uint128_t id1 = FastRandU128();
-  uint128_t id2 = FastRandU128();
+  uint64_t id1 = FastRandU64();
+  uint64_t id2 = FastRandU64();
 
   EXPECT_NE(x, y);
   EXPECT_NE(id1, id2);

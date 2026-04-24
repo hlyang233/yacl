@@ -51,12 +51,12 @@ void ParaCcrHashInplace_128(absl::Span<uint128_t> inout);
 // Tweakable Circular Correlation Robust (TCCR) Hash function 
 // See GKWY20 paper (https://eprint.iacr.org/2019/074.pdf) Sec 7.4
 // tccrhash for a single block, TccrHash(x,i) = RP(RP(x) ^ i) ^ RP(x)
-uint128_t TccrHash_128(uint128_t x, uint128_t i);
+uint128_t TccrHash_128(uint128_t x, uint64_t i);
 
 // parallel tccrhash for multiple blocks
-std::vector<uint128_t> ParaTccrHash_128(absl::Span<const uint128_t> x, uint128_t begin_index);
+std::vector<uint128_t> ParaTccrHash_128(absl::Span<const uint128_t> x, uint64_t begin_index);
 
 // inplace parallel tccrhash for many blocks
-void ParaTccrHashInplace_128(absl::Span<uint128_t> inout, uint128_t begin_index);
+void ParaTccrHashInplace_128(absl::Span<uint128_t> inout, uint64_t begin_index);
 
 }  // namespace yacl::crypto

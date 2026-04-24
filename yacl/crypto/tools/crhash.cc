@@ -151,35 +151,35 @@ void ParaCcrHashInplace_128(absl::Span<uint128_t> inout) {
 // Tweakable Circular Correlation Robust (TCCR) Hash function 
 // See GKWY20 paper (https://eprint.iacr.org/2019/074.pdf) Sec 7.4
 // TccrHash(x,i) = RP(RP(x) ^ i) ^ RP(x)
-uint128_t TccrHash_128(uint128_t x, uint128_t i) {
-    const auto& RP = GetCrHashDefaultRP();
-    uint128_t tmp = RP.Gen(x);  // tmp = RP(x)
-    return RP.Gen(tmp ^ i) ^ tmp;
+uint128_t TccrHash_128(uint128_t x, uint64_t i) {
+  const auto& RP = GetCrHashDefaultRP();
+  uint128_t tmp = RP.Gen(x);  // tmp = RP(x)
+  return RP.Gen(tmp ^ i) ^ tmp;
 }
 
 // TccrHash(x,i) for elements in x, i begins with begin_index, return the result
-std::vector<uint128_t> ParaTccrHash_128(absl::Span<const uint128_t> x, uint128_t begin_index) {
-    std::vector<uint128_t> out(x.size());
-    std::vector<uint128_t> tmp(x.size());
-    const auto& RP = GetCrHashDefaultRP(); 
-    // out = RP(x)
-    RP.GenForMultiInputs(x, absl::MakeSpan(out));  
-    // tmp = RP(x)
-    std::memcpy(tmp.data(), out.data(), x.size() * sizeof(uint128_t));
-    // tmp = RP(x) ^ i
-    for(uint64_t i = 0; i < tmp.size(); i++) {
-        tmp[i] ^= (i + begin_index);
-    }
-    // tmp = RP(tmp) = RP(RP(x) ^ i)
-    RP.GenForMultiInputsInplace(absl::MakeSpan(tmp));
-    // out = tmp ^ out = RP(RP(x) ^ i) ^ RP(x)
-    std::transform(tmp.begin(), tmp.end(), out.begin(), out.begin(),
-                   std::bit_xor<uint128_t>());
-    return out;
+std::vector<uint128_t> ParaTccrHash_128(absl::Span<const uint128_t> x, uint64_t begin_index) {
+  std::vector<uint128_t> out(x.size());
+  std::vector<uint128_t> tmp(x.size());
+  const auto& RP = GetCrHashDefaultRP(); 
+  // out = RP(x)
+  RP.GenForMultiInputs(x, absl::MakeSpan(out));  
+  // tmp = RP(x)
+  std::memcpy(tmp.data(), out.data(), x.size() * sizeof(uint128_t));
+  // tmp = RP(x) ^ i
+  for(uint64_t i = 0; i < tmp.size(); i++) {
+    tmp[i] ^= (i + begin_index);
+  } 
+  // tmp = RP(tmp) = RP(RP(x) ^ i)
+  RP.GenForMultiInputsInplace(absl::MakeSpan(tmp));
+  // out = tmp ^ out = RP(RP(x) ^ i) ^ RP(x)
+  std::transform(tmp.begin(), tmp.end(), out.begin(), out.begin(),
+                 std::bit_xor<uint128_t>());
+  return out;
 }
 
 // TccrHash(x,i) for elements in inout (inplace), i begins with begin_index
-void ParaTccrHashInplace_128(absl::Span<uint128_t> inout, uint128_t begin_index) {
+void ParaTccrHashInplace_128(absl::Span<uint128_t> inout, uint64_t begin_index) {
   const auto& RP = GetCrHashDefaultRP();  
   // TODO: add dynamic batch size
   alignas(32) std::array<uint128_t, kBatchSize> tmp;  
@@ -196,7 +196,7 @@ void ParaTccrHashInplace_128(absl::Span<uint128_t> inout, uint128_t begin_index)
     std::memcpy(tmp_span.data(), inout_span.data(), kBatchSize * sizeof(uint128_t));
     // tmp_span = RP(x) ^ i
     for(i = 0; i < kBatchSize; i++) {
-    	tmp_span[i] ^= (i + offset + begin_index);
+      tmp_span[i] ^= (i + offset + begin_index);
 	}   
     // tmp_span = RP(RP(x) ^ i)
     RP.GenForMultiInputsInplace(tmp_span);
@@ -207,16 +207,16 @@ void ParaTccrHashInplace_128(absl::Span<uint128_t> inout, uint128_t begin_index)
   }
   uint64_t remain = size - offset;
   if (remain > 0) {
-      auto inout_span = inout.subspan(offset, remain);
-      RP.GenForMultiInputsInplace(inout_span);
-      std::memcpy(tmp_span.data(), inout_span.data(), remain * sizeof(uint128_t));
-      for(i = 0; i < remain; i++) {
-    	tmp_span[i] ^= (i + offset + begin_index);
-	  }    
-      RP.GenForMultiInputsInplace(tmp_span.subspan(0, remain));
-      std::transform(tmp_span.begin(), tmp_span.begin() + remain,
-                     inout_span.begin(), inout_span.begin(),
-                     std::bit_xor<uint128_t>());
+    auto inout_span = inout.subspan(offset, remain);
+    RP.GenForMultiInputsInplace(inout_span);
+    std::memcpy(tmp_span.data(), inout_span.data(), remain * sizeof(uint128_t));
+    for(i = 0; i < remain; i++) {
+      tmp_span[i] ^= (i + offset + begin_index);
+	}    
+    RP.GenForMultiInputsInplace(tmp_span.subspan(0, remain));
+    std::transform(tmp_span.begin(), tmp_span.begin() + remain,
+                   inout_span.begin(), inout_span.begin(),
+                   std::bit_xor<uint128_t>());
   }  
 }
 
